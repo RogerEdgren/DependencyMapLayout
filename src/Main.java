@@ -4,14 +4,13 @@ public class Main extends PApplet {
 
 	public static void main(String[] args) {
 		 PApplet.main("Main");
-		 		 
+		 		  
 		 XmlFileParser.parseFile("data\\Concept Car.ana");
 		 GraphHandler graphHandler = GraphHandler.getInstance();
 		 int nodeCount = graphHandler.getNodeCount();
 		 int edgeCount = graphHandler.getEdgeCount();
 		 
-		 int dummy = 0;
-		 dummy++;
+
 	}
 
 	
