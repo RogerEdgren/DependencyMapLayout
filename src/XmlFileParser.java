@@ -6,7 +6,9 @@ import org.w3c.dom.NodeList;
 import org.w3c.dom.Node;
 import org.w3c.dom.Element;
 
-
+// parses a Paipe xml input file
+// Note: Almost no safety checks are being made anywhere. This was to allow for faster development but is probably
+// not a good idea in the long run.
 public class XmlFileParser {
 
    private XmlFileParser() {
@@ -17,14 +19,16 @@ public class XmlFileParser {
 	   GraphHandler graphHandler = GraphHandler.getInstance();
 
 	   Element nodeElement = (Element)node;
+	   String alias = nodeElement.getAttribute("alias");
 	   String title = nodeElement.getAttribute("title");
+	   String wpResp = nodeElement.getAttribute("wpResp");
 	   int id = Integer.parseInt(nodeElement.getAttribute("id"));
 	   String pos = nodeElement.getAttribute("pos");
 	   pos = pos.replaceAll("\\s+",""); 
 	   String[] parts = pos.split(",");
 	   int xPos = Integer.parseInt(parts[0]);
 	   int yPos = Integer.parseInt(parts[1]);
-	   graphHandler.addNode(title, id, shipmentId, xPos + xOffset, yPos + yOffset, side);
+	   graphHandler.addNode(alias, title, wpResp, id, shipmentId, xPos + xOffset, yPos + yOffset, side);
    }
 
    
@@ -37,23 +41,18 @@ public class XmlFileParser {
    		
 		   Node childNode = childNodes.item(j);
 		   String nodeName = childNode.getNodeName();
-		   if (nodeName == "work-package") {
-   
-			   addNodeFromWorkPackage(childNode, shipmentId, xOffset, yOffset, 0);   			
-		   }
-		   else if (nodeName == "external-object") {
-	   			
+		   if (nodeName == "work-package")
+			   addNodeFromWorkPackage(childNode, shipmentId, xOffset, yOffset, 0);
+		   else if (nodeName == "external-object")
 			   parseExternalObject(childNode, shipmentId, xOffset, yOffset);
-		   }
-		   else if (nodeName == "wp-group") {
-	   			
+		   else if (nodeName == "wp-group") {   			
 			   Element wpGroupElement = (Element)childNode;
 			   String pos = wpGroupElement.getAttribute("pos");
 			   pos = pos.replaceAll("\\s+",""); 
 			   String[] parts = pos.split(",");
 			   int xPos = Integer.parseInt(parts[0]);
 			   int yPos = Integer.parseInt(parts[1]);
-			   parseShipmentChilds(childNode, shipmentId, xPos, yPos);	
+			   parseShipmentChilds(childNode, shipmentId, xPos + xOffset, yPos + yOffset);	
 		   }
 	   }
    }
@@ -76,19 +75,15 @@ public class XmlFileParser {
    private static void parseAnatomy(NodeList anatomyNodes)
    {
 	   int anatomyNodesLength = anatomyNodes.getLength();
-	   
        for (int i = 0; i < anatomyNodesLength; i++) {
     	   Node childNode = anatomyNodes.item(i); 
     	   
-    	   if (childNode.getNodeName() == "shipment") {
-    		   
+    	   if (childNode.getNodeName() == "external-object")
+    		   parseExternalObject(childNode, -1, 0, 0);
+    	   else if (childNode.getNodeName() == "shipment") {    		   
     		   Element shipmentElement = (Element)childNode;
     		   int shipmentId = Integer.parseInt(shipmentElement.getAttribute("id"));
     		   parseShipmentChilds(childNode, shipmentId, 0, 0);
-    	   }
-    	   else if (childNode.getNodeName() == "external-object") {
-    		   
-    		   parseExternalObject(childNode, -1, 0, 0);
     	   }
        }
    }
@@ -110,13 +105,13 @@ public class XmlFileParser {
     		   int toId = Integer.parseInt(relationElement.getAttribute("toId"));
 
     		   graphHandler.addEdge(fromId, toId);
- 
     	   }
        }
    }
    
    
-   public static void parseFile(String xmlFileName) {
+   public static void parseFile(String xmlFileName) 
+   {
 		
 		try {
 			File inputFile = new File(xmlFileName);
